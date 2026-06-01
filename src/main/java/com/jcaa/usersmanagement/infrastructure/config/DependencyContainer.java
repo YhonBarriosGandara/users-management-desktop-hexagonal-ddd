@@ -6,6 +6,11 @@ import com.jcaa.usersmanagement.application.port.in.GetAllUsersUseCase;
 import com.jcaa.usersmanagement.application.port.in.GetUserByIdUseCase;
 import com.jcaa.usersmanagement.application.port.in.LoginUseCase;
 import com.jcaa.usersmanagement.application.port.in.UpdateUserUseCase;
+import com.jcaa.usersmanagement.application.port.in.congresista.CreateCongresistaUseCase;
+import com.jcaa.usersmanagement.application.port.in.congresista.DeleteCongresistaUseCase;
+import com.jcaa.usersmanagement.application.port.in.congresista.GetCongresistaByIdUseCase;
+import com.jcaa.usersmanagement.application.port.in.congresista.ListCongresistasUseCase;
+import com.jcaa.usersmanagement.application.port.in.congresista.UpdateCongresistaUseCase;
 import com.jcaa.usersmanagement.application.service.CreateUserService;
 import com.jcaa.usersmanagement.application.service.DeleteUserService;
 import com.jcaa.usersmanagement.application.service.EmailNotificationService;
@@ -13,12 +18,19 @@ import com.jcaa.usersmanagement.application.service.GetAllUsersService;
 import com.jcaa.usersmanagement.application.service.GetUserByIdService;
 import com.jcaa.usersmanagement.application.service.LoginService;
 import com.jcaa.usersmanagement.application.service.UpdateUserService;
+import com.jcaa.usersmanagement.application.service.congresista.CreateCongresistaService;
+import com.jcaa.usersmanagement.application.service.congresista.DeleteCongresistaService;
+import com.jcaa.usersmanagement.application.service.congresista.GetCongresistaByIdService;
+import com.jcaa.usersmanagement.application.service.congresista.ListCongresistasService;
+import com.jcaa.usersmanagement.application.service.congresista.UpdateCongresistaService;
 import com.jcaa.usersmanagement.infrastructure.adapter.email.JavaMailEmailSenderAdapter;
 import com.jcaa.usersmanagement.infrastructure.adapter.email.SmtpConfig;
 import com.jcaa.usersmanagement.infrastructure.adapter.persistence.config.DatabaseConfig;
 import com.jcaa.usersmanagement.infrastructure.adapter.persistence.config.DatabaseConnectionFactory;
+import com.jcaa.usersmanagement.infrastructure.adapter.persistence.repository.CongresistaRepositoryMySQL;
 import com.jcaa.usersmanagement.infrastructure.adapter.persistence.repository.UserRepositoryMySQL;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.controller.UserController;
+import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.controller.congresista.CongresistaController;
 
 import java.sql.Connection;
 import jakarta.validation.Validator;
@@ -31,6 +43,12 @@ public final class DependencyContainer {
   private static final String DB_USER = "db.username";
   private static final String DB_PASSWORD = "db.password";
 
+  private static final String DB_CONG_HOST = "db.congresista.host";
+  private static final String DB_CONG_PORT = "db.congresista.port";
+  private static final String DB_CONG_NAME = "db.congresista.name";
+  private static final String DB_CONG_USER = "db.congresista.username";
+  private static final String DB_CONG_PASSWORD = "db.congresista.password";
+
   private static final String SMTP_HOST = "smtp.host";
   private static final String SMTP_PORT = "smtp.port";
   private static final String SMTP_USER = "smtp.username";
@@ -39,12 +57,17 @@ public final class DependencyContainer {
   private static final String SMTP_FROM_NAME = "smtp.from.name";
 
   private final UserController userController;
+  private final CongresistaController congresistaController;
 
   public DependencyContainer() {
     final AppProperties properties = new AppProperties();
 
     final Connection connection = buildDatabaseConnection(properties);
     final UserRepositoryMySQL userRepository = new UserRepositoryMySQL(connection);
+
+    final Connection congresistaConnection = buildCongresistaDatabaseConnection(properties);
+    final CongresistaRepositoryMySQL congresistaRepository =
+        new CongresistaRepositoryMySQL(congresistaConnection);
 
     final JavaMailEmailSenderAdapter emailSender =
         new JavaMailEmailSenderAdapter(buildSmtpConfig(properties));
@@ -53,6 +76,7 @@ public final class DependencyContainer {
     // Construir Validator para las validaciones en la capa de aplicación
     final Validator validator = ValidatorProvider.buildValidator();
 
+    // ── Users ──────────────────────────────────────────────────────
     final CreateUserUseCase createUserUseCase =
         new CreateUserService(userRepository, userRepository, emailNotification, validator);
     final UpdateUserUseCase updateUserUseCase =
@@ -71,10 +95,35 @@ public final class DependencyContainer {
             getUserByIdUseCase,
             getAllUsersUseCase,
             loginUseCase);
+
+    // ── Congresista ────────────────────────────────────────────────
+    final CreateCongresistaUseCase createCongresistaUseCase =
+        new CreateCongresistaService(congresistaRepository, congresistaRepository, validator);
+    final UpdateCongresistaUseCase updateCongresistaUseCase =
+        new UpdateCongresistaService(
+            congresistaRepository, congresistaRepository, congresistaRepository, validator);
+    final DeleteCongresistaUseCase deleteCongresistaUseCase =
+        new DeleteCongresistaService(congresistaRepository, congresistaRepository, validator);
+    final GetCongresistaByIdUseCase getCongresistaByIdUseCase =
+        new GetCongresistaByIdService(congresistaRepository, validator);
+    final ListCongresistasUseCase listCongresistasUseCase =
+        new ListCongresistasService(congresistaRepository);
+
+    this.congresistaController =
+        new CongresistaController(
+            createCongresistaUseCase,
+            updateCongresistaUseCase,
+            deleteCongresistaUseCase,
+            getCongresistaByIdUseCase,
+            listCongresistasUseCase);
   }
 
   public UserController userController() {
     return userController;
+  }
+
+  public CongresistaController congresistaController() {
+    return congresistaController;
   }
 
   private static Connection buildDatabaseConnection(final AppProperties properties) {
@@ -85,6 +134,17 @@ public final class DependencyContainer {
             properties.get(DB_NAME),
             properties.get(DB_USER),
             properties.get(DB_PASSWORD));
+    return DatabaseConnectionFactory.createConnection(config);
+  }
+
+  private static Connection buildCongresistaDatabaseConnection(final AppProperties properties) {
+    final DatabaseConfig config =
+        new DatabaseConfig(
+            properties.get(DB_CONG_HOST),
+            properties.getInt(DB_CONG_PORT),
+            properties.get(DB_CONG_NAME),
+            properties.get(DB_CONG_USER),
+            properties.get(DB_CONG_PASSWORD));
     return DatabaseConnectionFactory.createConnection(config);
   }
 

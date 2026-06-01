@@ -7,10 +7,16 @@ import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.Li
 import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.LoginHandler;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.OperationHandler;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.UpdateUserHandler;
+import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.congresista.CreateCongresistaHandler;
+import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.congresista.DeleteCongresistaHandler;
+import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.congresista.GetCongresistaByIdHandler;
+import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.congresista.ListCongresistasHandler;
+import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.congresista.UpdateCongresistaHandler;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.io.ConsoleIO;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.io.UserResponsePrinter;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.menu.MenuOption;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.controller.UserController;
+import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.controller.congresista.CongresistaController;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Map;
 import java.util.Optional;
@@ -28,12 +34,15 @@ public final class UserManagementCli {
   private static final String MENU_BORDER = "  ==========================================";
 
   private final UserController userController;
+  private final CongresistaController congresistaController;
   private final ConsoleIO console;
 
   public void start() {
     console.println(BANNER);
-    final UserResponsePrinter printer = new UserResponsePrinter(console);
-    runLoop(buildHandlers(printer));
+    final UserResponsePrinter userPrinter = new UserResponsePrinter(console);
+    final com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.congresista.CongresistaResponsePrinter congresistaPrinter =
+        new com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.congresista.CongresistaResponsePrinter(console);
+    runLoop(buildHandlers(userPrinter, congresistaPrinter));
   }
 
   private void runLoop(final Map<MenuOption, OperationHandler> handlers) {
@@ -67,14 +76,21 @@ public final class UserManagementCli {
     }
   }
 
-  private Map<MenuOption, OperationHandler> buildHandlers(final UserResponsePrinter printer) {
-    return Map.of(
-        MenuOption.LIST_USERS,  new ListUsersHandler(userController, printer),
-        MenuOption.FIND_USER,   new FindUserByIdHandler(userController, console, printer),
-        MenuOption.CREATE_USER, new CreateUserHandler(userController, console, printer),
-        MenuOption.UPDATE_USER, new UpdateUserHandler(userController, console, printer),
-        MenuOption.DELETE_USER, new DeleteUserHandler(userController, console),
-        MenuOption.LOGIN,       new LoginHandler(userController, console, printer));
+  private Map<MenuOption, OperationHandler> buildHandlers(
+      final UserResponsePrinter userPrinter,
+      final com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.congresista.CongresistaResponsePrinter congresistaPrinter) {
+    return Map.ofEntries(
+        Map.entry(MenuOption.LIST_USERS,         new ListUsersHandler(userController, userPrinter)),
+        Map.entry(MenuOption.FIND_USER,          new FindUserByIdHandler(userController, console, userPrinter)),
+        Map.entry(MenuOption.CREATE_USER,        new CreateUserHandler(userController, console, userPrinter)),
+        Map.entry(MenuOption.UPDATE_USER,        new UpdateUserHandler(userController, console, userPrinter)),
+        Map.entry(MenuOption.DELETE_USER,        new DeleteUserHandler(userController, console)),
+        Map.entry(MenuOption.LOGIN,              new LoginHandler(userController, console, userPrinter)),
+        Map.entry(MenuOption.LIST_CONGRESISTAS,  new ListCongresistasHandler(congresistaController, congresistaPrinter)),
+        Map.entry(MenuOption.FIND_CONGRESISTA,   new GetCongresistaByIdHandler(congresistaController, console, congresistaPrinter)),
+        Map.entry(MenuOption.CREATE_CONGRESISTA, new CreateCongresistaHandler(congresistaController, console, congresistaPrinter)),
+        Map.entry(MenuOption.UPDATE_CONGRESISTA, new UpdateCongresistaHandler(congresistaController, console, congresistaPrinter)),
+        Map.entry(MenuOption.DELETE_CONGRESISTA, new DeleteCongresistaHandler(congresistaController, console)));
   }
 
   private void printMenu() {
