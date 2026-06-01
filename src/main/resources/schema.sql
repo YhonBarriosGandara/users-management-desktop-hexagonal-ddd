@@ -31,3 +31,22 @@ VALUES (
     'ACTIVE'
 );
 
+-- =============================================
+-- Base de datos para Congresista
+-- =============================================
+CREATE DATABASE IF NOT EXISTS eventos_congresos
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+
+USE eventos_congresos;
+
+CREATE TABLE IF NOT EXISTS congresista (
+    id                INT           NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    nombre            VARCHAR(100)  NOT NULL,
+    apellido          VARCHAR(100)  NOT NULL,
+    institucion       VARCHAR(200)  NOT NULL,
+    email             VARCHAR(150)  NOT NULL UNIQUE,
+    telefono          VARCHAR(20)   DEFAULT NULL,
+    es_miembro_comite BOOLEAN       NOT NULL DEFAULT FALSE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
