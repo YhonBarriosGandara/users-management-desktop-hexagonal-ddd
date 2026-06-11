@@ -11,6 +11,11 @@ import com.jcaa.usersmanagement.application.port.in.congresista.DeleteCongresist
 import com.jcaa.usersmanagement.application.port.in.congresista.GetCongresistaByIdUseCase;
 import com.jcaa.usersmanagement.application.port.in.congresista.ListCongresistasUseCase;
 import com.jcaa.usersmanagement.application.port.in.congresista.UpdateCongresistaUseCase;
+import com.jcaa.usersmanagement.application.port.in.trabajo.CountTrabajosPorAutorUseCase;
+import com.jcaa.usersmanagement.application.port.in.trabajo.ListTrabajosPorAutoresConTelefonoUseCase;
+import com.jcaa.usersmanagement.application.port.in.trabajo.ListTrabajosPorAutorUseCase;
+import com.jcaa.usersmanagement.application.port.in.trabajo.ListTrabajosPorPalabraClaveUseCase;
+import com.jcaa.usersmanagement.application.port.in.trabajo.ListTrabajosUseCase;
 import com.jcaa.usersmanagement.application.service.CreateUserService;
 import com.jcaa.usersmanagement.application.service.DeleteUserService;
 import com.jcaa.usersmanagement.application.service.EmailNotificationService;
@@ -23,14 +28,21 @@ import com.jcaa.usersmanagement.application.service.congresista.DeleteCongresist
 import com.jcaa.usersmanagement.application.service.congresista.GetCongresistaByIdService;
 import com.jcaa.usersmanagement.application.service.congresista.ListCongresistasService;
 import com.jcaa.usersmanagement.application.service.congresista.UpdateCongresistaService;
+import com.jcaa.usersmanagement.application.service.trabajo.CountTrabajosPorAutorService;
+import com.jcaa.usersmanagement.application.service.trabajo.ListTrabajosPorAutoresConTelefonoService;
+import com.jcaa.usersmanagement.application.service.trabajo.ListTrabajosPorAutorService;
+import com.jcaa.usersmanagement.application.service.trabajo.ListTrabajosPorPalabraClaveService;
+import com.jcaa.usersmanagement.application.service.trabajo.ListTrabajosService;
 import com.jcaa.usersmanagement.infrastructure.adapter.email.JavaMailEmailSenderAdapter;
 import com.jcaa.usersmanagement.infrastructure.adapter.email.SmtpConfig;
 import com.jcaa.usersmanagement.infrastructure.adapter.persistence.config.DatabaseConfig;
 import com.jcaa.usersmanagement.infrastructure.adapter.persistence.config.DatabaseConnectionFactory;
 import com.jcaa.usersmanagement.infrastructure.adapter.persistence.repository.CongresistaRepositoryMySQL;
+import com.jcaa.usersmanagement.infrastructure.adapter.persistence.repository.TrabajoRepositoryMySQL;
 import com.jcaa.usersmanagement.infrastructure.adapter.persistence.repository.UserRepositoryMySQL;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.controller.UserController;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.controller.congresista.CongresistaController;
+import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.controller.trabajo.TrabajoController;
 
 import java.sql.Connection;
 import jakarta.validation.Validator;
@@ -58,6 +70,7 @@ public final class DependencyContainer {
 
   private final UserController userController;
   private final CongresistaController congresistaController;
+  private final TrabajoController trabajoController;
 
   public DependencyContainer() {
     final AppProperties properties = new AppProperties();
@@ -116,6 +129,29 @@ public final class DependencyContainer {
             deleteCongresistaUseCase,
             getCongresistaByIdUseCase,
             listCongresistasUseCase);
+
+    // ── Trabajo ────────────────────────────────────────────────────
+    final TrabajoRepositoryMySQL trabajoRepository =
+        new TrabajoRepositoryMySQL(congresistaConnection);
+
+    final ListTrabajosUseCase listTrabajosUseCase =
+        new ListTrabajosService(trabajoRepository);
+    final ListTrabajosPorAutorUseCase listTrabajosPorAutorUseCase =
+        new ListTrabajosPorAutorService(trabajoRepository, validator);
+    final CountTrabajosPorAutorUseCase countTrabajosPorAutorUseCase =
+        new CountTrabajosPorAutorService(trabajoRepository);
+    final ListTrabajosPorPalabraClaveUseCase listTrabajosPorPalabraClaveUseCase =
+        new ListTrabajosPorPalabraClaveService(trabajoRepository, validator);
+    final ListTrabajosPorAutoresConTelefonoUseCase listTrabajosPorAutoresConTelefonoUseCase =
+        new ListTrabajosPorAutoresConTelefonoService(trabajoRepository);
+
+    this.trabajoController =
+        new TrabajoController(
+            listTrabajosUseCase,
+            listTrabajosPorAutorUseCase,
+            countTrabajosPorAutorUseCase,
+            listTrabajosPorPalabraClaveUseCase,
+            listTrabajosPorAutoresConTelefonoUseCase);
   }
 
   public UserController userController() {
@@ -124,6 +160,10 @@ public final class DependencyContainer {
 
   public CongresistaController congresistaController() {
     return congresistaController;
+  }
+
+  public TrabajoController trabajoController() {
+    return trabajoController;
   }
 
   private static Connection buildDatabaseConnection(final AppProperties properties) {
