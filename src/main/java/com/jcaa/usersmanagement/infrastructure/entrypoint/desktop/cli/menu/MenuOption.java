@@ -19,6 +19,11 @@ public enum MenuOption {
   CREATE_CONGRESISTA(9, "Crear congresista"),
   UPDATE_CONGRESISTA(10, "Actualizar congresista"),
   DELETE_CONGRESISTA(11, "Eliminar congresista"),
+  LIST_TRABAJOS(12, "Listar trabajos enviados"),
+  LIST_TRABAJOS_POR_AUTOR(13, "Listar trabajos por autor"),
+  COUNT_TRABAJOS_POR_AUTOR(14, "Cantidad de trabajos por autor"),
+  LIST_TRABAJOS_POR_PALABRA_CLAVE(15, "Buscar trabajos por palabra clave"),
+  LIST_TRABAJOS_POR_AUTORES_CON_TELEFONO(16, "Trabajos de autores con telefono"),
   EXIT(0, "Exit");
 
   private final int number;
