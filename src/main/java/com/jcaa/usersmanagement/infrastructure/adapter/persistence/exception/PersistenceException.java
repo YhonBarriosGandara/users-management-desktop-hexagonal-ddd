@@ -45,4 +45,8 @@ public final class PersistenceException extends RuntimeException {
   public static PersistenceException becauseConnectionFailed(final Throwable cause) {
     return new PersistenceException(MESSAGE_CONNECTION, cause);
   }
+
+  public static PersistenceException becauseQueryFailed(final String queryName, final Throwable cause) {
+    return new PersistenceException("Failed to execute query: " + queryName, cause);
+  }
 }
