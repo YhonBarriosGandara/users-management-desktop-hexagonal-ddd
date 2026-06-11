@@ -12,11 +12,18 @@ import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.co
 import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.congresista.GetCongresistaByIdHandler;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.congresista.ListCongresistasHandler;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.congresista.UpdateCongresistaHandler;
+import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.trabajo.CountTrabajosPorAutorHandler;
+import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.trabajo.ListTrabajosHandler;
+import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.trabajo.ListTrabajosPorAutoresConTelefonoHandler;
+import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.trabajo.ListTrabajosPorAutorHandler;
+import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.trabajo.ListTrabajosPorPalabraClaveHandler;
+import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.trabajo.TrabajoResponsePrinter;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.io.ConsoleIO;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.io.UserResponsePrinter;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.menu.MenuOption;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.controller.UserController;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.controller.congresista.CongresistaController;
+import com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.controller.trabajo.TrabajoController;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Map;
 import java.util.Optional;
@@ -35,6 +42,7 @@ public final class UserManagementCli {
 
   private final UserController userController;
   private final CongresistaController congresistaController;
+  private final TrabajoController trabajoController;
   private final ConsoleIO console;
 
   public void start() {
@@ -42,7 +50,8 @@ public final class UserManagementCli {
     final UserResponsePrinter userPrinter = new UserResponsePrinter(console);
     final com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.congresista.CongresistaResponsePrinter congresistaPrinter =
         new com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.congresista.CongresistaResponsePrinter(console);
-    runLoop(buildHandlers(userPrinter, congresistaPrinter));
+    final TrabajoResponsePrinter trabajoPrinter = new TrabajoResponsePrinter(console);
+    runLoop(buildHandlers(userPrinter, congresistaPrinter, trabajoPrinter));
   }
 
   private void runLoop(final Map<MenuOption, OperationHandler> handlers) {
@@ -78,7 +87,8 @@ public final class UserManagementCli {
 
   private Map<MenuOption, OperationHandler> buildHandlers(
       final UserResponsePrinter userPrinter,
-      final com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.congresista.CongresistaResponsePrinter congresistaPrinter) {
+      final com.jcaa.usersmanagement.infrastructure.entrypoint.desktop.cli.handler.congresista.CongresistaResponsePrinter congresistaPrinter,
+      final TrabajoResponsePrinter trabajoPrinter) {
     return Map.ofEntries(
         Map.entry(MenuOption.LIST_USERS,         new ListUsersHandler(userController, userPrinter)),
         Map.entry(MenuOption.FIND_USER,          new FindUserByIdHandler(userController, console, userPrinter)),
@@ -90,7 +100,12 @@ public final class UserManagementCli {
         Map.entry(MenuOption.FIND_CONGRESISTA,   new GetCongresistaByIdHandler(congresistaController, console, congresistaPrinter)),
         Map.entry(MenuOption.CREATE_CONGRESISTA, new CreateCongresistaHandler(congresistaController, console, congresistaPrinter)),
         Map.entry(MenuOption.UPDATE_CONGRESISTA, new UpdateCongresistaHandler(congresistaController, console, congresistaPrinter)),
-        Map.entry(MenuOption.DELETE_CONGRESISTA, new DeleteCongresistaHandler(congresistaController, console)));
+        Map.entry(MenuOption.DELETE_CONGRESISTA, new DeleteCongresistaHandler(congresistaController, console)),
+        Map.entry(MenuOption.LIST_TRABAJOS,      new ListTrabajosHandler(trabajoController, trabajoPrinter)),
+        Map.entry(MenuOption.LIST_TRABAJOS_POR_AUTOR, new ListTrabajosPorAutorHandler(trabajoController, console, trabajoPrinter)),
+        Map.entry(MenuOption.COUNT_TRABAJOS_POR_AUTOR, new CountTrabajosPorAutorHandler(trabajoController, trabajoPrinter)),
+        Map.entry(MenuOption.LIST_TRABAJOS_POR_PALABRA_CLAVE, new ListTrabajosPorPalabraClaveHandler(trabajoController, console, trabajoPrinter)),
+        Map.entry(MenuOption.LIST_TRABAJOS_POR_AUTORES_CON_TELEFONO, new ListTrabajosPorAutoresConTelefonoHandler(trabajoController, trabajoPrinter)));
   }
 
   private void printMenu() {
